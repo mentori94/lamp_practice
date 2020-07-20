@@ -10,9 +10,9 @@ function redirect_to($url){
   exit;
 }
 
-function get_get($name){
-  if(isset($_GET[$name]) === true){
-    return $_GET[$name];
+function get_post($name){
+  if(isset($_POST[$name]) === true){
+   return h($_POST[$name]);
   };
   return '';
 }
@@ -23,6 +23,11 @@ function get_post($name){
   };
   return '';
 }
+
+function h($name) {
+ return htmlspecialchars($name);
+}
+
 
 function get_file($name){
   if(isset($_FILES[$name]) === true){
