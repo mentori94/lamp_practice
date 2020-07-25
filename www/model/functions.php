@@ -17,7 +17,7 @@ function get_post($name){
   return '';
 }
 
-function get_post($name){
+function get_get($name){
   if(isset($_POST[$name]) === true){
     return $_POST[$name];
   };
