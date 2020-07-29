@@ -6,6 +6,9 @@ require_once MODEL_PATH . 'item.php';
 
 session_start();
 
+$token = get_csrf_token();
+$token = is_valid_csrf_token($token);
+
 if(is_logined() === false){
   redirect_to(LOGIN_URL);
 }

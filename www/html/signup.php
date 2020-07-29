@@ -4,6 +4,9 @@ require_once MODEL_PATH . 'functions.php';
 
 session_start();
 
+$token = get_csrf_token();
+$token = is_valid_csrf_token($token);
+
 if(is_logined() === true){
   redirect_to(HOME_URL);
 }

@@ -16,14 +16,17 @@
       <div class="form-group">
         <label for="name">名前: </label>
         <input type="text" name="name" id="name" class="form-control">
+        <input type="hidden" name="token" value="<?php print($token); ?>">
       </div>
       <div class="form-group">
         <label for="password">パスワード: </label>
         <input type="password" name="password" id="password" class="form-control">
+        <input type="hidden" name="token" value="<?php print($token); ?>">
       </div>
       <div class="form-group">
         <label for="password_confirmation">パスワード（確認用）: </label>
         <input type="password" name="password_confirmation" id="password_confirmation" class="form-control">
+        <input type="hidden" name="token" value="<?php print($token); ?>">
       </div>
       <input type="submit" value="登録" class="btn btn-primary">
     </form>
