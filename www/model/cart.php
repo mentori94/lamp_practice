@@ -101,23 +101,55 @@ function delete_cart($db, $cart_id){
   return execute_query($db, $sql, array($cart_id) );
 }
 
+// 購入時におけるカート処理
 function purchase_carts($db, $carts){
-  if(validate_cart_purchase($carts) === false){
-    return false;
-  }
-  foreach($carts as $cart){
-    if(update_item_stock(
-        $db, 
-        $cart['item_id'], 
-        $cart['stock'] - $cart['amount']
-      ) === false){
-      set_error($cart['name'] . 'の購入に失敗しました。');
-    }
-  }
   
-  delete_user_carts($db, $carts[0]['user_id']);
+  $db->beginTransaction();
+  try {
+
+    if(validate_cart_purchase($carts) === false){
+      return false;
+    }
+    foreach($carts as $cart){
+      if(update_item_stock(
+          $db, 
+          $cart['item_id'], 
+          $cart['stock'] - $cart['amount']
+        ) === false){
+        set_error($cart['name'] . 'の購入に失敗しました。');
+      }
+    }
+    
+    insert_orders_table($db, $carts[0]['user_id']);
+    $order_id = $db->lastInsertId();
+    foreach($carts as $cart) {
+      insert_orders_detail_table($db, $order_id, $cart['item_id'], $cart['price'], $cart['amount']);
+    }
+
+    delete_user_carts($db, $carts[0]['user_id']);
+    $db->commit();
+  } catch(PDOException $e) {
+      $dbh -> rollback();
+      throw $e;
+  }
 }
 
+// 購入履歴テーブルにデータ挿入
+function insert_orders_table($db, $user_id) {
+  $sql = "INSERT INTO `orders` (`user_id`, `created`) VALUES (?, NOW())";
+
+  execute_query($db, $sql,  array($user_id));
+}
+
+// 購入明細テーブルにデータ挿入
+function insert_orders_detail_table($db, $order_id, $item_id, $price, $amount) {
+  $sql = "INSERT INTO `order_details` (`order_id`, `item_id`, `buy_price`, `amount`) VALUES (?, ?, ?, ?)";
+
+  execute_query($db, $sql,  array($order_id, $item_id, $price, $amount));
+}
+
+
+// 購入完了のカート情報削除
 function delete_user_carts($db, $user_id){
   $sql = "
     DELETE FROM
@@ -156,3 +188,93 @@ function validate_cart_purchase($carts){
   }
   return true;
 }
+
+// 購入履歴データ抽出
+function get_user_orders_history($db, $user_id) {
+  $sql = 'SELECT 
+  orders.order_id, 
+  created,
+  SUM(order_details.amount * order_details.buy_price) as total_price
+  FROM
+  orders
+  
+  JOIN
+  order_details
+  ON
+  orders.order_id = order_details.order_id
+  WHERE 
+  user_id = ?
+  GROUP BY
+  orders.order_id
+  ORDER BY
+  orders.order_id desc';
+
+  return fetch_all_query($db, $sql, array($user_id));
+}
+
+// 購入履歴データ抽出(admin)
+function get_full_orders_history($db) {
+  $sql = 'SELECT 
+  orders.order_id, 
+  created,
+  SUM(order_details.amount * order_details.buy_price) as total_price
+  FROM
+  orders
+  
+  JOIN
+  order_details
+  ON
+  orders.order_id = order_details.order_id
+  GROUP BY
+  orders.order_id
+  ORDER BY
+  orders.order_id desc';
+
+  return fetch_all_query($db, $sql);
+}
+
+
+
+
+// 購入明細データ抽出
+function get_user_order_details($db, $order_id) {
+  $sql = 
+  'SELECT
+  order_id,
+  items.name,
+  items.item_id,
+  buy_price,
+  amount,
+  order_details.amount * order_details.buy_price as total_price
+  FROM
+  order_details
+  JOIN
+  items
+  ON
+  order_details.item_id = items.item_id
+  WHERE
+  order_id = ?';
+
+  return fetch_all_query($db, $sql, array($order_id));
+}
+
+// 購入データ抽出
+function get_user_orders_info($db, $order_id) {
+  $sql = 'SELECT 
+  orders.order_id, 
+  created,
+  SUM(order_details.amount * order_details.buy_price) as total_price
+  FROM
+  orders
+  JOIN
+  order_details
+  ON
+  orders.order_id = order_details.order_id
+  WHERE 
+  orders.order_id = ?
+  GROUP BY
+  orders.order_id';
+
+  return fetch_all_query($db, $sql, array($order_id));
+}
+
