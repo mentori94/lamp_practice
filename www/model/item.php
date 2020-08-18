@@ -16,13 +16,11 @@ function get_item($db, $item_id){
     FROM
       items
     WHERE
-      item_id = ?
-  ";
-
+      item_id = ?";
   return fetch_query($db, $sql, array($item_id));
 }
 
-function get_items($db, $is_open = false){
+function get_items($db, $is_open = false, $order = ""){
   $sql = '
     SELECT
       item_id, 
@@ -40,6 +38,12 @@ function get_items($db, $is_open = false){
     ';
   }
 
+  if ($order !== "") {
+    $sql .= "
+      ORDER BY {$order}
+    ";
+  }
+
   return fetch_all_query($db, $sql);
 }
 
@@ -47,8 +51,8 @@ function get_all_items($db){
   return get_items($db);
 }
 
-function get_open_items($db){
-  return get_items($db, true);
+function get_open_items($db, $order = ""){
+  return get_items($db, true, $order);
 }
 
 function regist_item($db, $name, $price, $stock, $status, $image){
