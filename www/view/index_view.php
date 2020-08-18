@@ -12,6 +12,17 @@
 
   <div class="container">
     <h1>商品一覧</h1>
+    <div class="tab">
+      <form method="get">
+        <select name="sort">
+          <option value="item_id desc">新着順</option>
+          <option value="price asc">価格の安い順</option>
+          <option value="price desc">価格の高い順</option>
+          <!-- <option value="name asc">五十音順</option> -->
+        </select>
+        <input type="submit" value="並び替え">
+      </form>
+    </div>
     <?php include VIEW_PATH . 'templates/messages.php'; ?>
 
     <div class="card-deck">
